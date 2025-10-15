@@ -30,12 +30,12 @@ export default async function Page() {
 
 const client = `'use client'
 
-import { createClient } from '@/lib/supabase/client'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useEffect, useState } from 'react'
 
 export default function Page() {
   const [notes, setNotes] = useState<any[] | null>(null)
-  const supabase = createClient()
+  const supabase = createClientComponentClient()
 
   useEffect(() => {
     const getData = async () => {
