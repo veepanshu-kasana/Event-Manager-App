@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import RegisterButton from './RegisterButton';
 import { Card } from '@/components/ui/card';
+import Link from 'next/link';
 
 interface EventProps {
   params: { id: string };
@@ -40,7 +41,11 @@ export default async function EventDetailsPage({ params }: EventProps) {
         )}
         <p>{event.description}</p>
         <p className="font-semibold">Date: {eventDate.toLocaleString()}</p>
-        <p>Total Registered Users: {registrationCount ?? 0}</p>
+        <p>Total Registered Users: 
+          <Link href={`/admin/events/${event.id}/registrations`} className="text-blue-600 underline">
+            {registrationCount ?? 0}
+          </Link>
+        </p>
         {isFutureEvent ? (
           <RegisterButton eventId={event.id} />
         ) : (
