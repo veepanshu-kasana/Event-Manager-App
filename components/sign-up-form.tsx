@@ -29,7 +29,7 @@ export function SignUpForm({
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    const supabase = createClient();
+  const supabase = createClient();
     setIsLoading(true);
     setError(null);
 
