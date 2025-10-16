@@ -21,6 +21,20 @@ export default async function EventDetailsPage({ params }: EventProps) {
     notFound();
   }
 
+  // Fetch current user's id from session
+  const { data: { session } } = await supabase.auth.getSession();
+
+  // Fetch current user role only if logged in
+  let currentUserRole = null;
+  if (session) {
+    const { data: user } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', session.user.id)
+      .single();
+    currentUserRole = user?.role ?? null;
+  }
+
   // Fetch count of registered users for this event
   const { count: registrationCount, error: regError } = await supabase
     .from('registrations')
@@ -41,11 +55,16 @@ export default async function EventDetailsPage({ params }: EventProps) {
         )}
         <p>{event.description}</p>
         <p className="font-semibold">Date: {eventDate.toLocaleString()}</p>
-        <p>Total Registered Users: 
+        
+        {/* Only render link if current user is admin */}
+        <p>Total Registered Users: {currentUserRole === 'admin' ? (
           <Link href={`/admin/events/${event.id}/registrations`} className="text-blue-600 underline">
             {registrationCount ?? 0}
           </Link>
-        </p>
+        ) : (
+          registrationCount ?? 0
+        )}</p>
+        
         {isFutureEvent ? (
           <RegisterButton eventId={event.id} />
         ) : (
