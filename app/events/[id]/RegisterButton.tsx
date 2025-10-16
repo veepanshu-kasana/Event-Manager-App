@@ -19,21 +19,33 @@ export default function RegisterButton({ eventId }: RegisterButtonProps) {
 
   useEffect(() => {
     async function checkRegistration() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) return;
-      setUser(user);
-
-      const { data } = await supabase
-        .from('registrations')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('event_id', eventId)
-        .single();
-
-      setRegistered(!!data);
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError || !session?.user) {
+          setUser(null);
+          setRegistered(false);
+          return;
+        }
+  
+        setUser(session.user);
+  
+        const { data, error } = await supabase
+          .from('registrations')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .eq('event_id', eventId)
+          .single();
+  
+        if (error) {
+          setRegistered(false);
+          return;
+        }
+  
+        setRegistered(!!data);
+      } catch (e) {
+        setUser(null);
+        setRegistered(false);
+      }
     }
     checkRegistration();
   }, [eventId]);
