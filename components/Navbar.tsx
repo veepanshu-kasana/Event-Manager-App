@@ -36,6 +36,7 @@ export default function Navbar({ currentSession, currentUser }: NavbarProps) {
         <Link href="/events">Events</Link>
         {isAdmin && <Link href="/admin">Admin Dashboard</Link>}
         {isAdmin && <Link href="/admin/users">User Management</Link>}
+        {isAdmin && <Link href="/admin/chat">AI Chatbot</Link>}
         <span className="text-sm">Hi, {session.user.email}</span>
         <LogoutButton />
       </div>
