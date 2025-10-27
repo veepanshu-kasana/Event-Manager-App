@@ -14,6 +14,7 @@ export function LogoutButton() {
       alert('Logout failed: ' + error.message);
       return;
     }
+    router.refresh();
     router.push('/');
   };
 

@@ -3,12 +3,18 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Navbar from './Navbar';
+import type { Session } from '@supabase/supabase-js';
+
+interface UserData {
+  role?: string;
+  email: string;
+}
 
 export default function NavbarWrapper() {
   const supabase = createClient();
 
-  const [session, setSession] = useState<any | null>(null);
-  const [user, setUser] = useState<any | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<UserData | null>(null);
 
   useEffect(() => {
     async function loadSessionAndUser() {

@@ -1,5 +1,8 @@
+'use client';
+
 import Link from 'next/link';
 import {LogoutButton} from './logout-button';
+import type { Session } from '@supabase/supabase-js';
 
 interface User {
   email: string;
@@ -7,8 +10,8 @@ interface User {
 }
 
 interface NavbarProps {
-  currentSession: any | null;
-  currentUser?: User | null; // Pass the user info including role here
+  currentSession: Session | null;
+  currentUser?: User | null;
 }
 
 export default function Navbar({ currentSession, currentUser }: NavbarProps) {
@@ -37,7 +40,7 @@ export default function Navbar({ currentSession, currentUser }: NavbarProps) {
         {isAdmin && <Link href="/admin">Admin Dashboard</Link>}
         {isAdmin && <Link href="/admin/users">User Management</Link>}
         {isAdmin && <Link href="/admin/chat">AI Chatbot</Link>}
-        <span className="text-sm">Hi, {session.user.email}</span>
+        <span className="text-sm">Hi, {session?.user?.email?.split("@")[0]?.replace(/\d+$/, "") || "Unknown"}</span>
         <LogoutButton />
       </div>
     </nav>
