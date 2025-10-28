@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
 
 export default function BlockButton({ user }: { user: { id: string; is_blocked: boolean } }) {
   const supabase = createClient();
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   async function toggleBlock() {
@@ -16,8 +18,11 @@ export default function BlockButton({ user }: { user: { id: string; is_blocked: 
       .eq('id', user.id);
     setLoading(false);
 
-    if (error) alert('Failed to update user block status: ' + error.message);
-    else location.reload();
+    if (error) {
+      alert('Failed to update user block status: ' + error.message);
+    } else {
+      router.refresh();
+    }
   }
 
   return (

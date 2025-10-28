@@ -1,5 +1,6 @@
 // Server component part
 import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
 import React from 'react';
 import UserRow from './UserRow'; // client component for delete button row
 
@@ -11,6 +12,23 @@ interface User {
 
 export default async function UsersPage() {
   const supabase = await createClient();
+
+  // Check authentication
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    redirect('/auth/login');
+  }
+
+  // Check admin role
+  const { data: currentUser } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', session.user.id)
+    .single();
+
+  if (currentUser?.role !== 'admin') {
+    redirect('/events');
+  }
 
   const { data: users, error } = await supabase
     .from('users')

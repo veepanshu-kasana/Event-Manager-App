@@ -29,6 +29,15 @@ export default async function AdminPage() {
     .select('*')
     .order('date', { ascending: true });
 
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto p-4">
+        <h1 className="text-3xl font-bold mb-6">Admin Dashboard - Event Management</h1>
+        <p className="text-red-600">Error loading events: {error.message}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto p-4 space-y-10">
       <h1 className="text-3xl font-bold mb-6">Admin Dashboard - Event Management</h1>
@@ -37,8 +46,11 @@ export default async function AdminPage() {
         <Button>Add New Event</Button>
       </Link>
 
-      <ul className="space-y-4 mt-8">
-        {events?.map(event => (
+      {!events || events.length === 0 ? (
+        <p className="text-muted-foreground">No events found. Create your first event!</p>
+      ) : (
+        <ul className="space-y-4 mt-8">
+          {events.map(event => (
           <Card key={event.id} className="p-4 flex justify-between items-center">
             <div>
               <Link href={`/events/${event.id}`}>
@@ -54,7 +66,8 @@ export default async function AdminPage() {
             </div>
           </Card>
         ))}
-      </ul>
+        </ul>
+      )}
     </div>
   );
 }

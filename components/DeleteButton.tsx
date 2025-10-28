@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
 
 export default function DeleteButton({ userId, eventId }: { userId: string; eventId: string }) {
   const supabase = createClient();
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   async function deleteRegistration() {
@@ -19,8 +21,11 @@ export default function DeleteButton({ userId, eventId }: { userId: string; even
       .eq('event_id', eventId);
     setLoading(false);
 
-    if (error) alert('Failed to delete registration: ' + error.message);
-    else location.reload();
+    if (error) {
+      alert('Failed to delete registration: ' + error.message);
+    } else {
+      router.refresh();
+    }
   }
 
   return (

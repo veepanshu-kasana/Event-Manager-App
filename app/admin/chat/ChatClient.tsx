@@ -114,18 +114,18 @@ export default function ChatClient() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Events List */}
-        <div className="md:col-span-1 border rounded-md p-4 bg-white">
+        <div className="md:col-span-1 border rounded-md p-4 bg-card">
           <h2 className="font-semibold mb-3">Current Events</h2>
           <ScrollArea className="h-[400px]">
             <div className="space-y-2">
               {events.length === 0 ? (
-                <p className="text-sm text-gray-500">No events yet</p>
+                <p className="text-sm text-muted-foreground">No events yet</p>
               ) : (
                 events.map((event) => (
-                  <div key={event.id} className="p-2 bg-gray-50 rounded text-xs">
+                  <div key={event.id} className="p-2 bg-muted rounded text-xs">
                     <p className="font-medium">ID: {event.id}</p>
                     <p className="truncate">{event.title}</p>
-                    <p className="text-gray-500">{new Date(event.date).toLocaleDateString()}</p>
+                    <p className="text-muted-foreground">{new Date(event.date).toLocaleDateString()}</p>
                   </div>
                 ))
               )}
@@ -134,7 +134,7 @@ export default function ChatClient() {
         </div>
 
         {/* Chat Area */}
-        <div className="md:col-span-2 border rounded-md bg-gray-50 p-4 h-[500px] flex flex-col">
+        <div className="md:col-span-2 border rounded-md bg-card p-4 h-[500px] flex flex-col">
         <ScrollArea className="h-[400px] mb-4">
           <div className="space-y-3 pr-4">
             {messages.map((msg, i) => (

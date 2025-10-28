@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
 
 interface User {
   id: string;
@@ -17,6 +18,7 @@ interface UserRowProps {
 export default function UserRow({ user }: UserRowProps) {
   const [loading, setLoading] = useState(false);
   const supabase = createClient();
+  const router = useRouter();
 
   async function deleteUser() {
     if (!confirm(`Delete user ${user.email}? This action cannot be undone.`)) return;
@@ -30,7 +32,7 @@ export default function UserRow({ user }: UserRowProps) {
     if (error) {
       alert('Error deleting user: ' + error.message);
     } else {
-      location.reload();
+      router.refresh();
     }
   }
 
