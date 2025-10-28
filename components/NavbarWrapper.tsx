@@ -11,28 +11,64 @@ interface UserData {
 }
 
 export default function NavbarWrapper() {
-  const supabase = createClient();
-
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<UserData | null>(null);
+  const supabase = createClient();
 
   useEffect(() => {
+    async function upsertUser(authUser: { id: string; email?: string | null }) {
+      const { error } = await supabase
+        .from('users')
+        .upsert({
+          id: authUser.id,
+          email: authUser.email ?? null,
+        });
+      if (error) {
+        console.error('Failed to upsert user:', error.message);
+      }
+    }
+
+    async function fetchUserRole(userId: string) {
+      const { data, error } = await supabase
+        .from('users')
+        .select('role,email')
+        .eq('id', userId)
+        .single();
+      
+      if (error) {
+        console.error('Failed to fetch user role:', error.message);
+        return;
+      }
+      
+      console.log('User role fetched:', data);
+      setUser(data);
+    }
+
     async function loadSessionAndUser() {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        return;
+      }
+      
       setSession(session);
+      
       if (session?.user) {
         await upsertUser(session.user);
-        fetchUserRole(session.user.id);
+        await fetchUserRole(session.user.id);
       }
     }
 
     loadSessionAndUser();
 
     const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      console.log('Auth state changed:', _event, session?.user?.email);
       setSession(session);
+      
       if (session?.user) {
         await upsertUser(session.user);
-        fetchUserRole(session.user.id);
+        await fetchUserRole(session.user.id);
       } else {
         setUser(null);
       }
@@ -41,28 +77,7 @@ export default function NavbarWrapper() {
     return () => {
       listener?.subscription.unsubscribe();
     };
-  }, []);
-
-  async function upsertUser(user: { id: string; email?: string | null }) {
-    const { error } = await supabase
-      .from('users')
-      .upsert({
-        id: user.id,
-        email: user.email ?? null,
-      });
-    if (error) {
-      console.error('Failed to upsert user:', error.message);
-    }
-  }
-
-  async function fetchUserRole(userId: string) {
-    const { data } = await supabase
-      .from('users')
-      .select('role,email')
-      .eq('id', userId)
-      .single();
-    setUser(data);
-  }
+  }, [supabase]);
 
   return <Navbar currentSession={session} currentUser={user} />;
 }

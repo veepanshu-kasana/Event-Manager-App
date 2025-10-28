@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -21,16 +21,21 @@ export default function ChatClient() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Hi! I can help you CREATE, UPDATE, or DELETE events. What would you like to do?",
+      content: "Hi! I can help you manage events. I can:\n• CREATE new events\n• UPDATE existing events\n• DELETE events\n• SHOW events (upcoming by default, or past/all events)\n\nWhat would you like to do?",
     },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [events, setEvents] = useState<Event[]>([]);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchEvents();
   }, []);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   async function fetchEvents() {
     const supabase = createClient();
@@ -41,12 +46,15 @@ export default function ChatClient() {
     
     if (error) {
       console.error('Error fetching events:', error);
+      console.error('Error details:', error.message, error.code);
       return;
     }
     
     if (data) {
-      console.log('Fetched events:', data);
+      console.log('Fetched events successfully:', data.length, 'events');
       setEvents(data);
+    } else {
+      console.log('No events data returned');
     }
   }
 
@@ -91,7 +99,7 @@ export default function ChatClient() {
     setMessages([
       {
         role: "assistant",
-        content: "Hi! I can help you CREATE, UPDATE, or DELETE events. What would you like to do?",
+        content: "Hi! I can help you manage events. I can:\n• CREATE new events\n• UPDATE existing events\n• DELETE events\n• SHOW events (upcoming by default, or past/all events)\n\nWhat would you like to do?",
       },
     ]);
     setInput("");
@@ -141,6 +149,7 @@ export default function ChatClient() {
                 <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
               </div>
             ))}
+            <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
 
