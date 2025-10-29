@@ -144,6 +144,14 @@ export async function POST(req: Request) {
     const { messages } = (await req.json()) as RequestBody;
     if (!messages) return new Response(JSON.stringify({ error: "Messages required" }), { status: 400 });
 
+    // Add validation before API key usage
+    if (!process.env.GEMINI_API_KEY) {
+      return new Response(
+        JSON.stringify({ error: "Service temporarily unavailable" }), 
+        { status: 503 }
+      );
+    }
+
     // Initialize Gemini with function calling
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
     const model = genAI.getGenerativeModel({ 
