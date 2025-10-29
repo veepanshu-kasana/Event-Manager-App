@@ -1,53 +1,38 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client'; // your existing import pattern
+import { useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 
 interface RegisterButtonProps {
   eventId: string;
+  userId: string | null;
+  isRegistered: boolean;
+  isBlocked: boolean;
 }
 
-export default function RegisterButton({ eventId }: RegisterButtonProps) {
-  const supabase = createClient(); // call your createClient function
+export default function RegisterButton({ eventId, userId, isRegistered, isBlocked }: RegisterButtonProps) {
   const router = useRouter();
-
-  const [user, setUser] = useState<any>(null);
-  const [registered, setRegistered] = useState(false);
+  const [registered, setRegistered] = useState(isRegistered);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    async function checkRegistration() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) return;
-      setUser(user);
-
-      const { data } = await supabase
-        .from('registrations')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('event_id', eventId)
-        .single();
-
-      setRegistered(!!data);
-    }
-    checkRegistration();
-  }, [eventId]);
-
   const handleRegister = async () => {
-    if (!user) {
+    if (!userId) {
       alert('Please log in to register');
       router.push('/auth/login');
       return;
     }
 
+    if (isBlocked) {
+      alert('Your account has been blocked. You cannot register for events.');
+      return;
+    }
+
     setLoading(true);
+    const supabase = createClient();
     const { error } = await supabase.from('registrations').insert({
-      user_id: user.id,
+      user_id: userId,
       event_id: eventId,
     });
     setLoading(false);
@@ -60,9 +45,14 @@ export default function RegisterButton({ eventId }: RegisterButtonProps) {
       }
     } else {
       setRegistered(true);
+      router.refresh();
       alert('Registration successful!');
     }
   };
+
+  if (isBlocked) {
+    return <p className="text-red-600 font-semibold">Your account is blocked. You cannot register for events.</p>;
+  }
 
   if (registered) {
     return <p className="text-green-600 font-semibold">You are already registered for this event.</p>;
