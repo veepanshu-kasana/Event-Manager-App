@@ -1,6 +1,7 @@
-import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@/lib/supabase/server";
 import { parseDate } from "chrono-node";
+import { tools } from "./tools";
 
 interface Message {
   role: string;
@@ -10,95 +11,6 @@ interface Message {
 interface RequestBody {
   messages: Message[];
 }
-
-// Define function declarations for Gemini (flat array structure)
-const tools = [
-  {
-    name: "create_event",
-    description: "Creates a new event with title, description, date, and banner URL",
-    parameters: {
-      type: SchemaType.OBJECT,
-      properties: {
-        title: {
-          type: SchemaType.STRING,
-          description: "The event title"
-        },
-        description: {
-          type: SchemaType.STRING,
-          description: "The event description"
-        },
-        date: {
-          type: SchemaType.STRING,
-          description: "The event date in natural language format (e.g., '2025-10-20 20:00' or 'tomorrow at 5pm')"
-        },
-        banner_url: {
-          type: SchemaType.STRING,
-          description: "The URL of the event banner image"
-        }
-      },
-      required: ["title", "description", "date", "banner_url"]
-    }
-  },
-  {
-    name: "update_event",
-    description: "Updates an existing event by ID or name",
-    parameters: {
-      type: SchemaType.OBJECT,
-      properties: {
-        event_id: {
-          type: SchemaType.STRING,
-          description: "The event ID (UUID)"
-        },
-        event_name: {
-          type: SchemaType.STRING,
-          description: "The event name/title (if ID not provided)"
-        },
-        field: {
-          type: SchemaType.STRING,
-          description: "Field to update: title, description, date, or banner_url",
-          enum: ["title", "description", "date", "banner_url"]
-        },
-        value: {
-          type: SchemaType.STRING,
-          description: "The new value for the field"
-        }
-      },
-      required: ["field", "value"]
-    }
-  },
-  {
-    name: "delete_event",
-    description: "Deletes an event by ID or name",
-    parameters: {
-      type: SchemaType.OBJECT,
-      properties: {
-        event_id: {
-          type: SchemaType.STRING,
-          description: "The event ID (UUID)"
-        },
-        event_name: {
-          type: SchemaType.STRING,
-          description: "The event name/title (if ID not provided)"
-        }
-      }
-    }
-  },
-  {
-    name: "list_events",
-    description: "Lists events based on time filter",
-    parameters: {
-      type: SchemaType.OBJECT,
-      properties: {
-        event_type: {
-          type: SchemaType.STRING,
-          description: "Type of events to list: 'upcoming' (default), 'past', or 'all'",
-          enum: ["upcoming", "past", "all"]
-        }
-      },
-      required: ["event_type"]
-    }
-  }
-];
 
 // Helper function to resolve event ID from name
 async function resolveEventId(supabase: Awaited<ReturnType<typeof createClient>>, eventId?: string, eventName?: string): Promise<{ id?: string; error?: string }> {
@@ -127,14 +39,14 @@ export async function POST(req: Request) {
   try {
     // Admin check
     const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (!authUser) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     }
     const { data: userData } = await supabase
       .from('users')
       .select('role')
-      .eq('id', session.user.id)
+      .eq('id', authUser.id)
       .single();
     if (userData?.role !== 'admin') {
       return new Response(JSON.stringify({ error: "Forbidden: Admin access required" }), { status: 403 });
@@ -170,46 +82,7 @@ export async function POST(req: Request) {
     const systemInstruction = {
       role: "system",
       parts: [{
-        text: `You are an AI event management assistant for admins. Be conversational, helpful, and adapt to the admin's needs.
-
-CORE RULES:
-1. ALWAYS ask for information ONE field at a time
-2. WAIT for the user's response before asking the next field
-3. NEVER guess or assume information
-4. Only call functions when you have ALL required information
-5. Be flexible and understand natural language requests
-
-For CREATE event operation:
-- Guide step-by-step through: title → description → date → banner URL
-- Accept natural language dates ("tomorrow at 5pm", "next Friday 6pm", "2025-12-25 18:00")
-- Only call create_event when all 4 fields are collected
-
-For UPDATE event operation:
-- Ask for: event identifier (ID or name) → field to update → new value
-- Fields: title, description, date, or banner_url
-- Only call update_event with all 3 pieces of information
-
-For DELETE event operation:
-- Ask for event identifier (ID or name)
-- Call delete_event after confirmation
-
-For LISTING events (MOST IMPORTANT):
-- When admin says "show events", "list events", "what events", "see events" WITHOUT specifying time:
-  → Call list_events with event_type: "upcoming" (DEFAULT)
-  
-- When admin specifically asks for "past events", "old events", "previous events", "events that happened":
-  → Call list_events with event_type: "past"
-  
-- When admin asks for "all events", "both events", "all upcoming and past events", "every event":
-  → Call list_events with event_type: "all"
-
-FLEXIBILITY:
-- Understand variations in how admins ask for things
-- "Show me events" = upcoming events (default)
-- "What events do we have?" = upcoming events (default)
-- "Past events" = past events only
-- "Show everything" = all events
-- Be helpful and don't ask unnecessary questions when the intent is clear`
+        text: "You are an AI event management assistant. Help admins manage events conversationally."
       }]
     };
 

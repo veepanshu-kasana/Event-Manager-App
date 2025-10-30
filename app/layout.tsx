@@ -27,14 +27,14 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user: authUser } } = await supabase.auth.getUser();
   
   let currentUser = null;
-  if (session) {
+  if (authUser) {
     const { data: user } = await supabase
       .from('users')
       .select('role, email')
-      .eq('id', session.user.id)
+      .eq('id', authUser.id)
       .single();
     currentUser = user;
   }
@@ -48,7 +48,7 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Navbar currentSession={session} currentUser={currentUser} />
+          <Navbar currentSession={authUser} currentUser={currentUser} />
           {children}
         </ThemeProvider>
       </body>

@@ -33,11 +33,32 @@ export function LoginForm({
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error, data } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       if (error) throw error;
+      
+      // Auto-create user in public.users if they don't exist
+      if (data.user) {
+        const { data: existingUser } = await supabase
+          .from('users')
+          .select('id')
+          .eq('id', data.user.id)
+          .single();
+
+        if (!existingUser) {
+          await supabase
+            .from('users')
+            .insert({
+              id: data.user.id,
+              email: data.user.email,
+              role: 'user',
+              is_blocked: false
+            });
+        }
+      }
+      
       // Update this route to redirect to an authenticated route. The user already has an active session.
       router.push("/admin");
       router.refresh();
