@@ -37,7 +37,7 @@ export default function AdminForm() {
     const fileName = `${Date.now()}.${fileExt}`;
     const filePath = `banners/${fileName}`;
 
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from("event-banners")
       .upload(filePath, bannerFile, { upsert: true });
 

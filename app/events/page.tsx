@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
@@ -42,9 +43,11 @@ export default async function EventsPage() {
                     className="flex items-center space-x-4"
                   >
                     {event.banner_url && (
-                      <img
+                      <Image
                         src={event.banner_url}
                         alt={event.title}
+                        width={128}
+                        height={80}
                         className="w-32 h-20 object-cover rounded"
                       />
                     )}
@@ -78,9 +81,11 @@ export default async function EventsPage() {
                     className="flex items-center space-x-4"
                   >
                     {event.banner_url && (
-                      <img
+                      <Image
                         src={event.banner_url}
                         alt={event.title}
+                        width={128}
+                        height={80}
                         className="w-32 h-20 object-cover rounded"
                       />
                     )}
