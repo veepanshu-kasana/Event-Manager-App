@@ -88,7 +88,7 @@ export default function ChatClient() {
           { role: "assistant", content: "Error: " + (data.error || "Unknown error") },
         ]);
       }
-    } catch (error) {
+    } catch {
       setMessages([...updatedMessages, { role: "assistant", content: "Error connecting to chatbot." }]);
     } finally {
       setLoading(false);

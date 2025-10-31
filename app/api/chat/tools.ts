@@ -2,15 +2,6 @@ import { SchemaType } from "@google/generative-ai";
 import { createClient } from "@/lib/supabase/server";
 import { parseDate } from "chrono-node";
 
-// Types
-interface Event {
-  id: string;
-  title: string;
-  date: string;
-  description: string | null;
-  banner_url: string | null;
-}
-
 type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
 // Helper function to resolve event ID from name

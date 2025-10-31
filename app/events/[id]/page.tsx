@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
+import Image from 'next/image';
 import RegisterButton from './RegisterButton';
 import { Card } from '@/components/ui/card';
 import Link from 'next/link';
@@ -54,7 +55,7 @@ export default async function EventDetailsPage({ params }: EventProps) {
   }
 
   // Fetch count of registered users for this event
-  const { count: registrationCount, error: regError } = await supabase
+  const { count: registrationCount } = await supabase
     .from('registrations')
     .select('*', { count: 'exact', head: true }) // efficient count query
     .eq('event_id', id);
@@ -69,7 +70,7 @@ export default async function EventDetailsPage({ params }: EventProps) {
       <Card className="p-6 space-y-4">
         <h1 className="text-3xl font-bold">{event.title}</h1>
         {event.banner_url && (
-          <img src={event.banner_url} alt={event.title} className="w-full h-60 object-cover rounded" />
+          <Image src={event.banner_url} alt={event.title} width={768} height={240} className="w-full h-60 object-cover rounded" />
         )}
         <p>{event.description}</p>
         <p className="font-semibold">Date: {eventDate.toLocaleString()}</p>
