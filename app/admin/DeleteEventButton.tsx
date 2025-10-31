@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
+import { Trash2, Loader2 } from 'lucide-react';
 
 export default function DeleteEventButton({ eventId }: { eventId: string }) {
   const router = useRouter();
@@ -11,7 +12,7 @@ export default function DeleteEventButton({ eventId }: { eventId: string }) {
   const [loading, setLoading] = useState(false);
 
   async function handleDelete() {
-    if (!confirm('Are you sure you want to delete this event?')) return;
+    if (!confirm('Are you sure you want to delete this event? This action cannot be undone.')) return;
 
     setLoading(true);
     const { error } = await supabase
@@ -21,7 +22,6 @@ export default function DeleteEventButton({ eventId }: { eventId: string }) {
 
     setLoading(false);
     if (!error) {
-      alert('Event deleted!');
       router.refresh();
     } else {
       alert('Delete failed: ' + error.message);
@@ -29,8 +29,18 @@ export default function DeleteEventButton({ eventId }: { eventId: string }) {
   }
 
   return (
-    <Button variant="destructive" onClick={handleDelete} disabled={loading}>
-      {loading ? 'Deleting...' : 'Delete'}
+    <Button 
+      variant="destructive" 
+      size="icon"
+      onClick={handleDelete} 
+      disabled={loading}
+      className="shrink-0"
+    >
+      {loading ? (
+        <Loader2 className="w-4 h-4 animate-spin" />
+      ) : (
+        <Trash2 className="w-4 h-4" />
+      )}
     </Button>
   );
 }

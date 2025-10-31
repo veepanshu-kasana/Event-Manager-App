@@ -58,7 +58,7 @@ export async function POST(req: Request) {
     const systemInstruction = {
       role: "system",
       parts: [{
-        text: "You are an AI event management assistant. Help admins manage events conversationally."
+        text: "You are an AI event management assistant. Help admins manage events conversationally. Make sure the output you provide is in Markdown format."
       }]
     };
 
