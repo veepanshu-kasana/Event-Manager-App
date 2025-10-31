@@ -7,16 +7,16 @@ import DeleteEventButton from './DeleteEventButton';
 
 export default async function AdminPage() {
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user: authUser } } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!authUser) {
     redirect('/auth/login');
   }
 
   const { data: user } = await supabase
     .from('users')
     .select('role')
-    .eq('id', session.user.id)
+    .eq('id', authUser.id)
     .single();
   
   if (user?.role !== 'admin') {

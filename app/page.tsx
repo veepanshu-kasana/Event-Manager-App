@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 
 export default async function Home() {
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user: authUser } } = await supabase.auth.getUser();
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-muted py-10">
@@ -26,7 +26,7 @@ export default async function Home() {
                 Browse Events
               </Button>
             </Link>
-            {!session ? (
+            {!authUser ? (
               <Link href="/auth/login" passHref>
                 <Button variant="outline" size="lg" className="w-44 text-lg font-semibold border-primary text-primary hover:bg-primary/10">
                   Admin Login
@@ -37,8 +37,8 @@ export default async function Home() {
                 <span className="text-muted-foreground text-sm">Logged in as 
                   <strong>
                     {" "}
-                    {session.user.email
-                      ? session.user.email.split("@")[0].replace(/\d+$/, " ")
+                    {authUser.email
+                      ? authUser.email.split("@")[0].replace(/\d+$/, " ")
                       : "Unknown"}
                   </strong>
                 </span>

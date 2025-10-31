@@ -17,6 +17,28 @@ export async function GET(request: NextRequest) {
       token_hash,
     });
     if (!error) {
+      // Auto-create user in public.users if they don't exist
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        const { data: existingUser } = await supabase
+          .from('users')
+          .select('id')
+          .eq('id', user.id)
+          .single();
+
+        if (!existingUser) {
+          await supabase
+            .from('users')
+            .insert({
+              id: user.id,
+              email: user.email,
+              role: 'user',
+              is_blocked: false
+            });
+        }
+      }
+      
       // redirect user to specified redirect URL or root of app
       redirect(next);
     } else {

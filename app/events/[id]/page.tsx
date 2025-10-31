@@ -22,8 +22,8 @@ export default async function EventDetailsPage({ params }: EventProps) {
     notFound();
   }
 
-  // Fetch current user's id from session
-  const { data: { session } } = await supabase.auth.getSession();
+  // Fetch current user directly from Supabase (not cached session)
+  const { data: { user: authUser } } = await supabase.auth.getUser();
 
   // Fetch current user role only if logged in
   let currentUserRole = null;
@@ -31,13 +31,13 @@ export default async function EventDetailsPage({ params }: EventProps) {
   let userId = null;
   let isUserBlocked = false;
   
-  if (session) {
-    userId = session.user.id;
+  if (authUser) {
+    userId = authUser.id;
     
     const { data: user } = await supabase
       .from('users')
       .select('role, is_blocked')
-      .eq('id', session.user.id)
+      .eq('id', authUser.id)
       .single();
     currentUserRole = user?.role ?? null;
     isUserBlocked = user?.is_blocked ?? false;

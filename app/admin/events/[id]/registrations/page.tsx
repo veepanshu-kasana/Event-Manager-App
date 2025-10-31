@@ -22,9 +22,9 @@ export default async function EventRegistrationsPage({ params }: Props) {
   const { id } = await params;
   const supabase = await createClient();
 
-  // Check authentication
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
+  // Check authentication - get fresh user data from Supabase
+  const { data: { user: authUser } } = await supabase.auth.getUser();
+  if (!authUser) {
     redirect('/auth/login');
   }
 
@@ -32,7 +32,7 @@ export default async function EventRegistrationsPage({ params }: Props) {
   const { data: currentUser } = await supabase
     .from('users')
     .select('role')
-    .eq('id', session.user.id)
+    .eq('id', authUser.id)
     .single();
 
   if (currentUser?.role !== 'admin') {

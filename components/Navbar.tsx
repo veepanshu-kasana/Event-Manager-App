@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import {LogoutButton} from './logout-button';
 import {ThemeSwitcher} from './theme-switcher';
-import type { Session } from '@supabase/supabase-js';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface User {
   email: string;
@@ -11,15 +11,15 @@ interface User {
 }
 
 interface NavbarProps {
-  currentSession: Session | null;
+  currentSession: SupabaseUser | null;
   currentUser?: User | null;
 }
 
 export default function Navbar({ currentSession, currentUser }: NavbarProps) {
-  const session = currentSession;
+  const authUser = currentSession;
   const user = currentUser;
 
-  if (!session) {
+  if (!authUser) {
     return (
       <nav className="p-4 flex justify-between items-center bg-muted border-b">
         <Link href="/" className="font-bold text-lg">Event App</Link>
@@ -42,7 +42,7 @@ export default function Navbar({ currentSession, currentUser }: NavbarProps) {
         {isAdmin && <Link href="/admin" className="hover:underline">Admin Dashboard</Link>}
         {isAdmin && <Link href="/admin/users" className="hover:underline">User Management</Link>}
         {isAdmin && <Link href="/admin/chat" className="hover:underline">AI Chatbot</Link>}
-        <span className="text-sm">Hi, {session?.user?.email?.split("@")[0]?.replace(/\d+$/, "") || "Unknown"}</span>
+        <span className="text-sm">Hi, {authUser?.email?.split("@")[0]?.replace(/\d+$/, "") || "Unknown"}</span>
         <ThemeSwitcher />
         <LogoutButton />
       </div>
