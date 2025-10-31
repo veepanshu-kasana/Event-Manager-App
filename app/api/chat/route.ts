@@ -1,7 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@/lib/supabase/server";
-import { parseDate } from "chrono-node";
-import { tools } from "./tools";
+import { tools, listEvents, createEvent, updateEvent, deleteEvent } from "./tools";
 
 interface Message {
   role: string;
@@ -10,29 +9,6 @@ interface Message {
 
 interface RequestBody {
   messages: Message[];
-}
-
-// Helper function to resolve event ID from name
-async function resolveEventId(supabase: Awaited<ReturnType<typeof createClient>>, eventId?: string, eventName?: string): Promise<{ id?: string; error?: string }> {
-  if (eventId) return { id: eventId };
-  
-  if (!eventName) return { error: "Either event_id or event_name must be provided" };
-  
-  const { data: rows, error } = await supabase
-    .from("events")
-    .select("id,title,date")
-    .ilike("title", eventName.trim());
-  
-  if (error) return { error: `Event lookup failed: ${error.message}` };
-  if (!rows || rows.length === 0) return { error: "No event found with that name." };
-  
-  if (rows.length > 1) {
-    const options = "Multiple events found with that name. Please specify by ID:\n" +
-      rows.map(e => `• ${e.title} (${new Date(e.date).toLocaleString()}) [ID: ${e.id}]`).join("\n");
-    return { error: options };
-  }
-  
-  return { id: rows[0].id };
 }
 
 export async function POST(req: Request) {
@@ -116,136 +92,26 @@ export async function POST(req: Request) {
     let functionResult = "";
     
     if (functionName === "list_events") {
-      const eventType = args.event_type;
-      
-      if (eventType === "all") {
-        // Fetch all events (both upcoming and past)
-        const { data, error } = await supabase
-          .from("events")
-          .select("id,title,date,description,banner_url")
-          .order("date", { ascending: true });
-        
-        if (error) {
-          functionResult = `Error loading all events: ${error.message}`;
-        } else if (!data || data.length === 0) {
-          functionResult = `There are no events in the system.`;
-        } else {
-          const now = new Date();
-          const upcomingEvents = data.filter(e => new Date(e.date) >= now);
-          const pastEvents = data.filter(e => new Date(e.date) < now);
-          
-          functionResult = `Here are all events (${data.length} total):\n\n`;
-          
-          if (upcomingEvents.length > 0) {
-            functionResult += `📅 UPCOMING EVENTS (${upcomingEvents.length}):\n` + upcomingEvents.map(e =>
-              `• ID: ${e.id}\n  Title: ${e.title}\n  Date: ${new Date(e.date).toLocaleString()}\n  Description: ${e.description || "N/A"}\n`
-            ).join("\n");
-          }
-          
-          if (pastEvents.length > 0) {
-            functionResult += `\n🕒 PAST EVENTS (${pastEvents.length}):\n` + pastEvents.map(e =>
-              `• ID: ${e.id}\n  Title: ${e.title}\n  Date: ${new Date(e.date).toLocaleString()}\n  Description: ${e.description || "N/A"}\n`
-            ).join("\n");
-          }
-        }
-      } else {
-        // Fetch upcoming or past events only
-        const isPast = eventType === "past";
-        
-        const { data, error } = await supabase
-          .from("events")
-          .select("id,title,date,description,banner_url")
-          [isPast ? "lt" : "gte"]("date", new Date().toISOString())
-          .order("date", { ascending: !isPast });
-        
-        if (error) {
-          functionResult = `Error loading ${eventType} events: ${error.message}`;
-        } else if (!data || data.length === 0) {
-          functionResult = `There are no ${eventType} events.`;
-        } else {
-          functionResult = `Here are ${eventType} events (${data.length} total):\n\n` + data.map(e =>
-            `• ID: ${e.id}\n  Title: ${e.title}\n  Date: ${new Date(e.date).toLocaleString()}\n  Description: ${e.description || "N/A"}\n`
-          ).join("\n");
-        }
-      }
+      functionResult = await listEvents(args.event_type);
     }
-    
     else if (functionName === "create_event") {
-      const { title, description, date, banner_url } = args;
-      
-      const parsedDate = parseDate(date);
-      if (!parsedDate) {
-        functionResult = "Sorry, I couldn't understand the event date. Please use format like '2025-10-20 20:00'.";
-      } else {
-      const { error } = await supabase.from("events").insert([{
-          title,
-          description,
-          date: parsedDate.toISOString(),
-          banner_url
-        }]);
-        
-      if (error) {
-          functionResult = `Failed to create event: ${error.message}`;
-        } else {
-          functionResult = `Event "${title}" created successfully!`;
-        }
-      }
+      functionResult = await createEvent(
+        args.title,
+        args.description,
+        args.date,
+        args.banner_url
+      );
     }
-    
     else if (functionName === "update_event") {
-      const { event_id, event_name, field, value } = args;
-      
-      const { id, error: resolveError } = await resolveEventId(supabase, event_id, event_name);
-      
-      if (resolveError) {
-        functionResult = resolveError;
-      } else if (!id) {
-        functionResult = "Could not determine event ID.";
-      } else {
-        let valueToUpdate: string = value;
-        if (field === "date") {
-          const parsedDate = parseDate(value);
-        if (!parsedDate) {
-            functionResult = "Couldn't parse the date. Use format like '2025-10-20 20:00'.";
-            return new Response(JSON.stringify({ reply: functionResult }), { status: 200 });
-        }
-        valueToUpdate = parsedDate.toISOString();
-      }
-        
-      const { error } = await supabase
-        .from("events")
-          .update({ [field]: valueToUpdate })
-          .eq("id", id);
-        
-      if (error) {
-          functionResult = `Failed to update event: ${error.message}`;
-        } else {
-          functionResult = `Event updated successfully.`;
-        }
-      }
+      functionResult = await updateEvent(
+        args.field,
+        args.value,
+        args.event_id,
+        args.event_name
+      );
     }
-    
     else if (functionName === "delete_event") {
-      const { event_id, event_name } = args;
-      
-      const { id, error: resolveError } = await resolveEventId(supabase, event_id, event_name);
-      
-      if (resolveError) {
-        functionResult = resolveError;
-      } else if (!id) {
-        functionResult = "Could not determine event ID.";
-      } else {
-      const { error } = await supabase
-        .from("events")
-        .delete()
-          .eq("id", id);
-        
-      if (error) {
-          functionResult = `Failed to delete event: ${error.message}`;
-        } else {
-          functionResult = `Event deleted successfully.`;
-        }
-      }
+      functionResult = await deleteEvent(args.event_id, args.event_name);
     }
 
     // Return the function result directly as the assistant's reply
