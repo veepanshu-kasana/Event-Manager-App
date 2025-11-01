@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
 export function LogoutButton() {
@@ -31,8 +30,8 @@ export function LogoutButton() {
       localStorage.clear();
       sessionStorage.clear();
       
-      // Force full page redirect (clears all client state)
-      window.location.href = '/auth/login';
+      // Redirect to home page
+      window.location.href = '/';
     } catch (error) {
       console.error('Logout exception:', error);
       setLoading(false);
@@ -41,8 +40,8 @@ export function LogoutButton() {
   };
 
   return (
-    <Button onClick={logout} disabled={loading}>
+    <button onClick={logout} disabled={loading} className="w-full text-left">
       {loading ? 'Logging out...' : 'Logout'}
-    </Button>
+    </button>
   );
 }
