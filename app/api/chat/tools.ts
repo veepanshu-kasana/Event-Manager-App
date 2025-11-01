@@ -23,8 +23,10 @@ async function resolveEventId(
   if (!rows || rows.length === 0) return { error: "No event found with that name." };
   
   if (rows.length > 1) {
-    const options = "Multiple events found with that name. Please specify by ID:\n" +
-      rows.map(e => `• ${e.title} (${new Date(e.date).toLocaleString()}) [ID: ${e.id}]`).join("\n");
+    let options = "Multiple events found:\n";
+    rows.forEach((e, index) => {
+      options += `${index + 1}. **${e.title}** - ${new Date(e.date).toLocaleDateString()}\n   ID: \`${e.id}\`\n`;
+    });
     return { error: options };
   }
   
@@ -42,26 +44,29 @@ export async function listEvents(eventType: string): Promise<string> {
       .order("date", { ascending: true });
     
     if (error) {
-      return `Error loading all events: ${error.message}`;
+      return `❌ ${error.message}`;
     } else if (!data || data.length === 0) {
-      return `There are no events in the system.`;
+      return `No events found.`;
     } else {
       const now = new Date();
       const upcomingEvents = data.filter(e => new Date(e.date) >= now);
       const pastEvents = data.filter(e => new Date(e.date) < now);
       
-      let result = `Here are all events (${data.length} total):\n\n`;
+      let result = `**${data.length} Events**\n\n`;
       
       if (upcomingEvents.length > 0) {
-        result += `📅 UPCOMING EVENTS (${upcomingEvents.length}):\n` + upcomingEvents.map(e =>
-          `• ID: ${e.id}\n  Title: ${e.title}\n  Date: ${new Date(e.date).toLocaleString()}\n  Description: ${e.description || "N/A"}\n`
-        ).join("\n");
+        result += `📅 **Upcoming (${upcomingEvents.length})**\n`;
+        upcomingEvents.forEach((e, index) => {
+          result += `${index + 1}. **${e.title}** - ${new Date(e.date).toLocaleDateString()}\n   ID: \`${e.id}\`\n`;
+        });
+        result += '\n';
       }
       
       if (pastEvents.length > 0) {
-        result += `\n🕒 PAST EVENTS (${pastEvents.length}):\n` + pastEvents.map(e =>
-          `• ID: ${e.id}\n  Title: ${e.title}\n  Date: ${new Date(e.date).toLocaleString()}\n  Description: ${e.description || "N/A"}\n`
-        ).join("\n");
+        result += `🕒 **Past (${pastEvents.length})**\n`;
+        pastEvents.forEach((e, index) => {
+          result += `${index + 1}. **${e.title}** - ${new Date(e.date).toLocaleDateString()}\n   ID: \`${e.id}\`\n`;
+        });
       }
       
       return result;
@@ -76,13 +81,17 @@ export async function listEvents(eventType: string): Promise<string> {
       .order("date", { ascending: !isPast });
     
     if (error) {
-      return `Error loading ${eventType} events: ${error.message}`;
+      return `❌ ${error.message}`;
     } else if (!data || data.length === 0) {
-      return `There are no ${eventType} events.`;
+      return `No ${eventType} events.`;
     } else {
-      return `Here are ${eventType} events (${data.length} total):\n\n` + data.map(e =>
-        `• ID: ${e.id}\n  Title: ${e.title}\n  Date: ${new Date(e.date).toLocaleString()}\n  Description: ${e.description || "N/A"}\n`
-      ).join("\n");
+      let result = `${eventType === 'upcoming' ? '📅' : '🕒'} **${data.length} ${eventType} events**\n\n`;
+      
+      data.forEach((e, index) => {
+        result += `${index + 1}. **${e.title}** - ${new Date(e.date).toLocaleDateString()}\n   ID: \`${e.id}\`\n`;
+      });
+      
+      return result;
     }
   }
 }
@@ -93,11 +102,21 @@ export async function createEvent(
   date: string, 
   banner_url: string
 ): Promise<string> {
+  // Validate all required fields are provided
+  if (!title || !description || !date || !banner_url) {
+    const missing = [];
+    if (!title) missing.push('title');
+    if (!description) missing.push('description');
+    if (!date) missing.push('date');
+    if (!banner_url) missing.push('banner_url');
+    return `❌ Missing required fields: ${missing.join(', ')}. Please provide all information.`;
+  }
+
   const supabase = await createClient();
   const parsedDate = parseDate(date);
   
   if (!parsedDate) {
-    return "Sorry, I couldn't understand the event date. Please use format like '2025-10-20 20:00'.";
+    return "❌ Invalid date format. Try: `2025-12-25 18:00` or `tomorrow 5pm`";
   }
   
   const { error } = await supabase.from("events").insert([{
@@ -108,9 +127,9 @@ export async function createEvent(
   }]);
   
   if (error) {
-    return `Failed to create event: ${error.message}`;
+    return `❌ ${error.message}`;
   } else {
-    return `Event "${title}" created successfully!`;
+    return `✅ **${title}** created for ${parsedDate.toLocaleDateString()}`;
   }
 }
 
@@ -124,16 +143,16 @@ export async function updateEvent(
   const { id, error: resolveError } = await resolveEventId(supabase, event_id, event_name);
   
   if (resolveError) {
-    return resolveError;
+    return `❌ ${resolveError}`;
   } else if (!id) {
-    return "Could not determine event ID.";
+    return "❌ Could not find event.";
   }
   
   let valueToUpdate: string = value;
   if (field === "date") {
     const parsedDate = parseDate(value);
     if (!parsedDate) {
-      return "Couldn't parse the date. Use format like '2025-10-20 20:00'.";
+      return "❌ Invalid date. Try: `2025-12-25 18:00` or `tomorrow 5pm`";
     }
     valueToUpdate = parsedDate.toISOString();
   }
@@ -144,9 +163,9 @@ export async function updateEvent(
     .eq("id", id);
   
   if (error) {
-    return `Failed to update event: ${error.message}`;
+    return `❌ ${error.message}`;
   } else {
-    return `Event updated successfully.`;
+    return `✅ Updated **${field}** successfully`;
   }
 }
 
@@ -155,9 +174,9 @@ export async function deleteEvent(event_id?: string, event_name?: string): Promi
   const { id, error: resolveError } = await resolveEventId(supabase, event_id, event_name);
   
   if (resolveError) {
-    return resolveError;
+    return `❌ ${resolveError}`;
   } else if (!id) {
-    return "Could not determine event ID.";
+    return "❌ Could not find event.";
   }
   
   const { error } = await supabase
@@ -166,9 +185,9 @@ export async function deleteEvent(event_id?: string, event_name?: string): Promi
     .eq("id", id);
   
   if (error) {
-    return `Failed to delete event: ${error.message}`;
+    return `❌ ${error.message}`;
   } else {
-    return `Event deleted successfully.`;
+    return `✅ Event deleted successfully`;
   }
 }
 

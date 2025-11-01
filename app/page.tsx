@@ -1,8 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
-import { LogoutButton } from "@/components/logout-button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Sparkles, Users, ArrowRight } from "lucide-react";
@@ -65,28 +64,6 @@ export default async function Home() {
             </Card>
           </div>
 
-          {/* User Status Card */}
-          {authUser && (
-            <Card className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950 dark:to-teal-950 border-2 border-emerald-200 dark:border-emerald-800">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-white font-bold text-lg shadow-lg">
-                      {authUser.email?.charAt(0).toUpperCase() || "U"}
-                    </div>
-                    <div>
-                      <p className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">Logged in as</p>
-                      <p className="font-bold text-emerald-900 dark:text-emerald-100">
-                        {authUser.email?.split("@")[0] || "User"}
-                      </p>
-                    </div>
-                  </div>
-                  <LogoutButton />
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
           {/* CTA Buttons */}
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-4">
@@ -115,7 +92,7 @@ export default async function Home() {
             {!authUser && (
               <div className="text-center">
                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Don't have an account?{" "}
+                  Don&apos;t have an account?{" "}
                   <Link 
                     href="/auth/sign-up" 
                     className="font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 underline underline-offset-4 decoration-2 hover:decoration-indigo-600 transition-colors"

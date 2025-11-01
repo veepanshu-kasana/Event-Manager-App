@@ -17,7 +17,12 @@ export async function GET(request: NextRequest) {
       token_hash,
     });
     if (!error) {
-      // Auto-create user in public.users if they don't exist
+      // Handle password recovery separately
+      if (type === 'recovery') {
+        redirect('/auth/update-password');
+      }
+      
+      // Auto-create user in public.users if they don't exist (for signup confirmation)
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {

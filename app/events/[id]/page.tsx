@@ -183,7 +183,7 @@ export default async function EventDetailsPage({ params }: EventProps) {
                     </div>
                     <div>
                       <h3 className="font-bold text-emerald-900 dark:text-emerald-100 text-lg">
-                        You're Registered!
+                        You&apos;re Registered!
                       </h3>
                       <p className="text-emerald-700 dark:text-emerald-300 text-sm">
                         We look forward to seeing you at this event

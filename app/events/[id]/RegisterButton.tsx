@@ -61,7 +61,7 @@ export default function RegisterButton({ eventId, userId, isRegistered, isBlocke
           <span className="font-bold">Already Registered</span>
         </div>
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          You're all set for this event!
+          You&apos;re all set for this event!
         </p>
       </div>
     );
