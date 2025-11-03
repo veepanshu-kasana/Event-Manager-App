@@ -247,6 +247,64 @@ export async function getEventDetails(event_id?: string, event_name?: string): P
   return result;
 }
 
+export async function getEventRegistrations(event_id?: string, event_name?: string): Promise<string> {
+  const supabase = await createClient();
+  const { id, error: resolveError } = await resolveEventId(supabase, event_id, event_name);
+  
+  if (resolveError) {
+    return `❌ ${resolveError}`;
+  } else if (!id) {
+    return "❌ Could not find event.";
+  }
+  
+  // Get event details
+  const { data: event, error: eventError } = await supabase
+    .from("events")
+    .select("title")
+    .eq("id", id)
+    .single();
+  
+  if (eventError || !event) {
+    return "❌ Event not found.";
+  }
+  
+  // Get registrations with user details
+  const { data: registrations, error } = await supabase
+    .from('registrations')
+    .select(`
+      user_id,
+      users (
+        id,
+        email,
+        role
+      )
+    `)
+    .eq('event_id', id);
+  
+  if (error) {
+    return `❌ ${error.message}`;
+  }
+  
+  if (!registrations || registrations.length === 0) {
+    return `📋 No users registered for **${event.title}** yet.`;
+  }
+  
+  let result = `## 👥 Registered Users for "${event.title}"\n\n`;
+  result += `**Total Registrations:** ${registrations.length}\n\n`;
+  
+  registrations.forEach((reg, index) => {
+    const user = reg.users;
+    if (user && typeof user === 'object' && !Array.isArray(user)) {
+      const typedUser = user as { id: string; email: string; role: string };
+      result += `${index + 1}. **${typedUser.email}**\n\n`;
+      result += `   🎭 Role: ${typedUser.role}\n\n`;
+      result += `   ID: \`${typedUser.id}\`\n\n`;
+    }
+  });
+  
+  return result;
+}
+
 // Tool definitions for Gemini
 export const tools = [
   {
@@ -337,6 +395,23 @@ export const tools = [
   {
     name: "get_event_details",
     description: "Gets detailed information about a specific event by name or ID. Use this when user asks to show details of an event",
+    parameters: {
+      type: SchemaType.OBJECT,
+      properties: {
+        event_id: {
+          type: SchemaType.STRING,
+          description: "The event ID (UUID)"
+        },
+        event_name: {
+          type: SchemaType.STRING,
+          description: "The event name/title (if ID not provided)"
+        }
+      }
+    }
+  },
+  {
+    name: "get_event_registrations",
+    description: "Shows all registered users for a specific event by name or ID. Use this when user asks to see who is registered or show registered users for an event",
     parameters: {
       type: SchemaType.OBJECT,
       properties: {
