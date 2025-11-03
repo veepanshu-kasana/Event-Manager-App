@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
+import { CheckCircle2, Loader2, UserPlus, LogIn } from 'lucide-react';
 
 interface RegisterButtonProps {
   eventId: string;
@@ -19,13 +20,11 @@ export default function RegisterButton({ eventId, userId, isRegistered, isBlocke
 
   const handleRegister = async () => {
     if (!userId) {
-      alert('Please log in to register');
       router.push('/auth/login');
       return;
     }
 
     if (isBlocked) {
-      alert('Your account has been blocked. You cannot register for events.');
       return;
     }
 
@@ -40,27 +39,63 @@ export default function RegisterButton({ eventId, userId, isRegistered, isBlocke
     if (error) {
       if (error.code === '23505') {
         alert('You have already registered for this event.');
+        setRegistered(true);
       } else {
         alert('Registration failed: ' + error.message);
       }
     } else {
       setRegistered(true);
       router.refresh();
-      alert('Registration successful!');
     }
   };
 
   if (isBlocked) {
-    return <p className="text-red-600 font-semibold">Your account is blocked. You cannot register for events.</p>;
+    return null;
   }
 
   if (registered) {
-    return <p className="text-green-600 font-semibold">You are already registered for this event.</p>;
+    return (
+      <div className="text-center py-2">
+        <div className="flex items-center justify-center gap-2 text-emerald-600 dark:text-emerald-400 mb-2">
+          <CheckCircle2 className="w-5 h-5" />
+          <span className="font-bold">Already Registered</span>
+        </div>
+        <p className="text-sm text-slate-600 dark:text-slate-400">
+          You&apos;re all set for this event!
+        </p>
+      </div>
+    );
+  }
+
+  if (!userId) {
+    return (
+      <Button 
+        onClick={handleRegister}
+        className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 h-12 text-base font-bold shadow-lg hover:shadow-xl transition-all duration-300"
+      >
+        <LogIn className="w-5 h-5 mr-2" />
+        Login to Register
+      </Button>
+    );
   }
 
   return (
-    <Button onClick={handleRegister} disabled={loading}>
-      {loading ? 'Registering...' : 'Register for this Event'}
+    <Button 
+      onClick={handleRegister} 
+      disabled={loading}
+      className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 h-12 text-base font-bold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
+    >
+      {loading ? (
+        <>
+          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+          Registering...
+        </>
+      ) : (
+        <>
+          <UserPlus className="w-5 h-5 mr-2" />
+          Register for Event
+        </>
+      )}
     </Button>
   );
 }
