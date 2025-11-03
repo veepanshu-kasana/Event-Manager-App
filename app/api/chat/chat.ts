@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { tools, listEvents, createEvent, updateEvent, deleteEvent } from "./tools";
+import { tools, listEvents, createEvent, updateEvent, deleteEvent, getEventDetails } from "./tools";
 
 interface Message {
   role: string;
@@ -46,6 +46,9 @@ async function executeFunctionCall(functionName: string, args: Record<string, st
     
     case "delete_event":
       return await deleteEvent(args.event_id, args.event_name);
+    
+    case "get_event_details":
+      return await getEventDetails(args.event_id, args.event_name);
     
     default:
       return "Function not found";

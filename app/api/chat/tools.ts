@@ -191,6 +191,62 @@ export async function deleteEvent(event_id?: string, event_name?: string): Promi
   }
 }
 
+export async function getEventDetails(event_id?: string, event_name?: string): Promise<string> {
+  const supabase = await createClient();
+  const { id, error: resolveError } = await resolveEventId(supabase, event_id, event_name);
+  
+  if (resolveError) {
+    return `❌ ${resolveError}`;
+  } else if (!id) {
+    return "❌ Could not find event.";
+  }
+  
+  const { data: event, error } = await supabase
+    .from("events")
+    .select("*")
+    .eq("id", id)
+    .single();
+  
+  if (error) {
+    return `❌ ${error.message}`;
+  }
+  
+  if (!event) {
+    return "❌ Event not found.";
+  }
+  
+  const eventDate = new Date(event.date);
+  const fullDate = eventDate.toLocaleDateString('en-US', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+  const time = eventDate.toLocaleTimeString('en-US', { 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  });
+  
+  const { count: registrationCount } = await supabase
+    .from('registrations')
+    .select('*', { count: 'exact', head: true })
+    .eq('event_id', id);
+  
+  let result = `## 📅 ${event.title}\n\n`;
+  result += `**Description:**\n${event.description || 'No description provided'}\n\n`;
+  result += `**Date:** ${fullDate}\n\n`;
+  result += `**Time:** ${time}\n\n`;
+  if (registrationCount !== null) {
+    result += `**Registrations:** ${registrationCount}\n\n`;
+  }
+  if (event.banner_url) {
+    result += `**Banner URL:** ${event.banner_url}\n\n`;
+  }
+  result += `**Event ID:** \`${event.id}\`\n`;
+  
+  return result;
+}
+
 // Tool definitions for Gemini
 export const tools = [
   {
@@ -276,6 +332,23 @@ export const tools = [
         }
       },
       required: ["event_type"]
+    }
+  },
+  {
+    name: "get_event_details",
+    description: "Gets detailed information about a specific event by name or ID. Use this when user asks to show details of an event",
+    parameters: {
+      type: SchemaType.OBJECT,
+      properties: {
+        event_id: {
+          type: SchemaType.STRING,
+          description: "The event ID (UUID)"
+        },
+        event_name: {
+          type: SchemaType.STRING,
+          description: "The event name/title (if ID not provided)"
+        }
+      }
     }
   }
 ];
