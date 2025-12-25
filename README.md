@@ -1,6 +1,6 @@
-# VK Events - Event Management Platform
+# VK Events - AI-Powered Event Management Platform
 
-A modern, full-featured event management platform built with Next.js, React, TypeScript, and Supabase. Enables users to discover, register for events, and provides administrators with powerful tools to create and manage events.
+A modern, full-featured event management platform built with Next.js, React, TypeScript, and Supabase. Features an **AI-powered admin assistant** using Gemini's function-calling capabilities for intelligent event management. Users can discover and register for events, while administrators leverage AI tools to automate event operations.
 
 ## Table of Contents
 
@@ -35,13 +35,23 @@ A modern, full-featured event management platform built with Next.js, React, Typ
 - **Event Registrations View**: See all users registered for specific events
 - **Banner Upload**: Upload custom banners for events
 
-### Admin AI Assistant Features
-- List all events (upcoming/past/all)
-- Create new events with natural language
-- Update event details
-- Delete events
-- Get event details and registrations
-- Conversational management interface
+### AI-Powered Admin Assistant (Function-Calling Architecture)
+Leverages **Gemini AI with function-calling** to enable natural language event management:
+
+**Capabilities:**
+- 📋 **List Events**: Query upcoming, past, or all events with intelligent filtering
+- ➕ **Create Events**: Generate events using natural language descriptions
+- ✏️ **Update Events**: Modify event details conversationally
+- 🗑️ **Delete Events**: Remove events with name or ID lookup
+- 📊 **Get Analytics**: Retrieve event details and registration statistics
+- 💬 **Conversational Interface**: Natural language processing for admin tasks
+
+**Technical Implementation:**
+- Uses Google Generative AI (Gemini 2.5 Flash)
+- Function-calling/tool-use pattern (not RAG)
+- Direct database operations via defined function schemas
+- Markdown-formatted responses with emojis
+- Date parsing with chrono-node for natural date inputs
 
 ## Tech Stack
 
@@ -61,8 +71,9 @@ A modern, full-featured event management platform built with Next.js, React, Typ
 - **Database**: Supabase (PostgreSQL)
 - **Authentication**: Supabase Auth
 - **Storage**: Supabase Storage (for event banners)
-- **AI**: Google Generative AI (Gemini)
-- **Date Parsing**: chrono-node
+- **AI Engine**: Google Generative AI (Gemini 2.5 Flash)
+- **AI Architecture**: Function-calling/Tool-use (not RAG)
+- **Date Parsing**: chrono-node (natural language dates)
 
 ### Development
 - **Linting**: ESLint 9
@@ -293,10 +304,16 @@ INSERT INTO storage.buckets (id, name) VALUES ('event-banners', 'event-banners')
    - Block/unblock users as needed
    - See user statistics
 
-5. **Use AI Assistant**
+5. **Use AI Assistant (Function-Calling)**
    - Click chatbot icon (bottom-right, admin only)
    - Use natural language to manage events
-   - Commands: list events, create event, delete event, etc.
+   - Examples:
+     - "List all upcoming events"
+     - "Create an event called Tech Conference on January 15th"
+     - "Show me registrations for [event name]"
+     - "Delete the event with ID xyz"
+   - AI uses function tools to query/modify database directly
+   - Responses formatted in Markdown with real-time data
 
 ## API Reference
 
